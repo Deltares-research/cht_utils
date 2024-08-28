@@ -16,9 +16,8 @@ dependencies = [
     "geopandas",
     "pyproj",
     "fiona",
-	"paramiko",
+    "paramiko",
     "xarray",
     "scipy",
     "pyyaml",
-    "hera"
 ]
