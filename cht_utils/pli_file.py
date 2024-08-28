@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+FileIO scripts for TEKAL pol and pli files
+
 Created on Mon Sep  6 12:08:35 2021
 
 @author: ormondt
@@ -9,7 +11,7 @@ import geopandas as gpd
 import pandas as pd
 import shapely
 
-import cht_utils.tekal as tek
+import .tekal as tek
 
 class Polyline:
     def __init__(self, x, y):
