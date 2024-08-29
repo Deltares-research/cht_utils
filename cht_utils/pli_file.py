@@ -11,7 +11,7 @@ import geopandas as gpd
 import pandas as pd
 import shapely
 
-import .tekal as tek
+import cht_utils.tekal as tek
 
 class Polyline:
     def __init__(self, x, y):
