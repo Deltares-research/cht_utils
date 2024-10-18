@@ -108,34 +108,82 @@ def merge_nc_map(file_list, variables, prcs=None, delete=False, output_file_name
 
     nens = len(file_list)
 
-    # Read first file    
+    # Read first file (this is the xarray dataset that will be used to store the data merged data)
+
     ds = xr.open_dataset(file_list[0])
 
-    # Read time and stations from first file
-    # time = ds.timemax
-    # x = ds.x
-    # y = ds.y
-    # ens = range(nens)
+    if "mesh2d_face_nodes" in ds:
 
-    # Make new data array filled with zeros with dimensions time, stations and ens
-    for v in variables:
-        d = np.zeros((len(ds.timemax), np.shape(ds.x)[0], np.shape(ds.x)[1], nens))
-        # Create a dataarray with dimensions time, x, y, ens
-        arr = xr.DataArray(data=d,
-                            dims=('timemax', 'n', 'm', 'ensemble'),
-                            coords={'timemax': ds.timemax, 'x': ds.x, 'y': ds.y, 'ensemble': range(nens)})
-        ds[v] = arr
+        # Quadtree
 
-    for iens, file in enumerate(file_list):
-        dsin = xr.open_dataset(file)
+        npoints = ds["nmesh2d_face"].size
+
         for v in variables:
-            ds[v][:,:,:,iens] = dsin[v]
 
-    for v in variables:
-        # arr = ds[v].fillna(-999.0).quantile(prcs, dim="ensemble", skipna=False)
-        arr = ds[v].quantile(prcs, dim="ensemble", skipna=True)
-        for ip, p in enumerate(prcs):
-            ds[v + "_" + str(round(p*100))] = arr[ip,:,:,:]
+            # Get the attributes of the variable
+            attrs = ds[v].attrs
+
+            # Create a new dataarray with dimensions time, x, y, ens
+            arr = xr.DataArray(data=np.zeros((len(ds.timemax), npoints, nens)),
+                               dims=('timemax', 'nmesh2d_face', 'ensemble'),
+                               coords={'timemax': ds.timemax, 'ensemble': range(nens)})
+            ds[v] = arr
+
+            for iens, file in enumerate(file_list):
+                dsin = xr.open_dataset(file)
+                ds[v][:,:,iens] = dsin[v]
+                dsin.close()
+            
+            # arr = ds[v].quantile(prcs, dim="ensemble", skipna=True)
+            # for ip, p in enumerate(prcs):
+            #     ds[v + "_" + str(round(p*100))] = arr[ip,:,:]
+
+            # Quantile method takes insanely long ...
+            # Try simple sorting and indexing instead (round up to be conservative)
+            arr = np.sort(ds[v], axis=2)
+            for ip, p in enumerate(prcs):
+                indx = min(max(int(np.ceil(p * nens)) - 1, 0), nens - 1)
+                da = xr.DataArray(data=arr[:,:,indx],
+                                  dims=('timemax', 'nmesh2d_face'),
+                                  coords={'timemax': ds.timemax})
+                da.attrs = attrs
+                ds[v + "_" + str(round(p*100))] = da
+
+    else:
+
+        # Regular grid
+
+        # Loop over variables to merge  
+        for v in variables:
+
+            # Get the attributes of the variable
+            attrs = ds[v].attrs
+
+            # Create a dataarray with dimensions time, x, y, ens
+            arr = xr.DataArray(data=np.zeros((len(ds.timemax), np.shape(ds.x)[0], np.shape(ds.x)[1], nens)),
+                               dims=('timemax', 'n', 'm', 'ensemble'),
+                               coords={'timemax': ds.timemax, 'x': ds.x, 'y': ds.y, 'ensemble': range(nens)})
+            ds[v] = arr
+
+            for iens, file in enumerate(file_list):
+                dsin = xr.open_dataset(file)
+                ds[v][:,:,:,iens] = dsin[v]
+                dsin.close()
+
+            # arr = ds[v].quantile(prcs, dim="ensemble", skipna=True)
+            # for ip, p in enumerate(prcs):
+            #     ds[v + "_" + str(round(p*100))] = arr[ip,:,:,:]
+
+            # Quantile method takes insanely long ...
+            # Try simple sorting and indexing instead (round up to be conservative)
+            arr = np.sort(ds[v], axis=3)
+            for ip, p in enumerate(prcs):
+                indx = min(max(int(np.ceil(p * nens)) - 1, 0), nens - 1)
+                da = xr.DataArray(data=arr[:,:,indx],
+                                  dims=('timemax', 'n', 'm'),
+                                  coords={'timemax': ds.timemax, 'x': ds.x, 'y': ds.y})
+                da.attrs = attrs
+                ds[v + "_" + str(round(p*100))] = da
 
     # Remove the original variables
     to_drop = ["zs", "zsmax", "cumprcp", "cuminf", "qinf", "hm0max"]
@@ -147,7 +195,8 @@ def merge_nc_map(file_list, variables, prcs=None, delete=False, output_file_name
         fo.delete_file(output_file_name)
     except:
         pass
-    ds.to_netcdf(path= output_file_name)
+
+    ds.to_netcdf(path=output_file_name)
     ds.close()
 
 
