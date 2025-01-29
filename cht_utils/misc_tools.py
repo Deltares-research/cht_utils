@@ -5,10 +5,11 @@ Created on Wed Apr 28 16:28:15 2021
 @author: ormondt
 """
 
-from scipy.interpolate import RegularGridInterpolator
+from scipy.interpolate import RegularGridInterpolator, griddata
 import numpy as np
 import json
 import yaml
+
 
 def interp2(x0, y0, z0, x1, y1, method="linear"):
     
@@ -25,6 +26,44 @@ def interp2(x0, y0, z0, x1, y1, method="linear"):
         z1 = f((y1,x1))
     
     return z1
+
+
+
+
+def interp3(x0, y0, z0, x1, y1, method="linear"):
+    """interpolation from unstructured or curvilinear source data
+
+    Args:
+        x0 (_type_): x coords source grid
+        y0 (_type_): y coords source grid
+        z0 (_type_): z coords source grid
+        x1 (_type_): x coords target grid
+        y1 (_type_): y coords target grid
+        method (str, optional): interpolator method. Defaults to "linear".
+
+    Returns:
+        _type_: z coords target grid
+    """    
+    sz0 = x0.shape  
+    x0 = x0.reshape(sz0[0]*sz0[1])
+    y0 = y0.reshape(sz0[0]*sz0[1])  
+    z0 = z0.reshape(sz0[0]*sz0[1]) 
+
+    # reshape x1 and y1
+    if np.atleast_1d(x1).ndim>1:
+        sz = x1.shape  
+        x1 = x1.reshape(sz[0]*sz[1])
+        y1 = y1.reshape(sz[0]*sz[1])  
+        # interpolate
+        z1 = griddata(np.array([x0, y0]).T, z0.T, np.array([x1, y1]).T,
+                    fill_value=np.nan, method=method)
+        
+        return z1.reshape(sz)        
+    else:    
+        z1 = griddata(np.array([x0, y0]).T, z0.T, np.array([x1, y1]).T,
+                            fill_value=np.nan, method=method)
+        return z1
+    
 
 def findreplace(file_name, str1, str2):
 
