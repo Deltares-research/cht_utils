@@ -53,16 +53,19 @@ def read_pli_file(file_name):
     return polylines
 
 
-def pli2gdf(file_name, crs=None):
+def pli2gdf(file_name, crs=None, name_string="name"):
     D = tek.tekal(file_name)
     D.info()
     gdf_list = []
     for j in range(len(D.blocks)):
+        name = D.blocks[j].name
+        # name is a byte string
+        name = name.decode("utf-8")
         m = D.read(j)
         x = m[0, :, 0]
         y = m[1, :, 0]
         line = shapely.geometry.LineString(list(zip(x, y)))
-        d = {"geometry": line}
+        d = {name_string: name, "geometry": line}
         gdf_list.append(d)
     if crs is not None:
         gdf = gpd.GeoDataFrame(gdf_list, crs=crs)
@@ -112,13 +115,16 @@ def pol2geojson(file_name_in, file_name_out, crs=None):
     gdf.to_file(file_name_out, driver="GeoJSON")
 
 
-def gdf2pli(gdf, file_name, header=True):
+def gdf2pli(gdf, file_name, header=True, name_string="name"):
     if gdf.crs.is_geographic:
         fid = open(file_name, "w")
         for index, row in gdf.iterrows():
             nrp = len(row["geometry"].coords)
             if header:
-                fid.write("BL" + str(index + 1).zfill(4) + "\n")
+                if name_string in row:
+                    fid.write(row[name_string] + "\n")
+                else:
+                    fid.write("BL" + str(index + 1).zfill(4) + "\n")
                 fid.write(str(nrp) + " " + "2\n")
             for ip in range(nrp):
                 x = row["geometry"].coords[ip][0]
