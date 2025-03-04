@@ -74,224 +74,264 @@ __version__ = "$Revision: 15512 $"
 # $HeadURL: https://svn.oss.deltares.nl/repos/openearthtools/trunk/python/OpenEarthTools/openearthtools/io/delft3d/tekal.py $
 # $Keywords: $
 
+
 class tekalblock:
-  """tekal file data block class"""
+    """tekal file data block class"""
 
-  def __init__(self):
-    self.header = []
-    self.nhdr   = None
-    self.index  = None
-    self.name   = None
-    self.npts   = None
-    self.nvar   = None
-    self.nx     = None
-    self.ny     = None
-    self.data   = None
-    self.tell   = float(0)
+    def __init__(self):
+        self.header = []
+        self.nhdr = None
+        self.index = None
+        self.name = None
+        self.npts = None
+        self.nvar = None
+        self.nx = None
+        self.ny = None
+        self.data = None
+        self.tell = float(0)
 
-  def __str__(self):
-    """print meta-info of tekal data block"""
-    txt = "%5g: nvar=%4g npts=%5g (%5g x%4g) %4s '%s'\n" % (self.index,self.nvar,self.npts,self.nx,self.ny,self.nhdr,self.name)
-    return txt
+    def __str__(self):
+        """print meta-info of tekal data block"""
+        txt = "%5g: nvar=%4g npts=%5g (%5g x%4g) %4s '%s'\n" % (
+            self.index,
+            self.nvar,
+            self.npts,
+            self.nx,
+            self.ny,
+            self.nhdr,
+            self.name,
+        )
+        return txt
 
-  def strheader(self):
-    """print meta-info header"""
-    txt = "%5s:      %4s      %5s (%5s x%4s) %4s '%s'\n" % ('block','nvar','npts','nx','ny','nhdr','blockname')
-    return txt
+    def strheader(self):
+        """print meta-info header"""
+        txt = "%5s:      %4s      %5s (%5s x%4s) %4s '%s'\n" % (
+            "block",
+            "nvar",
+            "npts",
+            "nx",
+            "ny",
+            "nhdr",
+            "blockname",
+        )
+        return txt
 
-  def info(self,fid,index):
-    """get meta-info of tekal data block """
+    def info(self, fid, index):
+        """get meta-info of tekal data block"""
 
-    # !!! where to start reading actual matrix incl size header for check !!!
-    self.tell  = fid.tell()
+        # !!! where to start reading actual matrix incl size header for check !!!
+        self.tell = fid.tell()
 
-    # pass and store comment block
-    rec = fid.readline()
-    if len(rec)==0:
-      return None;
-    n   = 0
-    while rec[0]=='*':
-      self.header.append(rec)
-      rec = fid.readline()
-      n   = n+1
+        # pass and store comment block
+        rec = fid.readline()
+        if len(rec) == 0:
+            return None
+        n = 0
+        while rec[0] == "*":
+            self.header.append(rec)
+            rec = fid.readline()
+            n = n + 1
 
-    # pass tekal block header
-    self.index = index
-    self.name  = rec.split()[0]
+        # pass tekal block header
+        self.index = index
+        self.name = rec.split()[0]
 
-    # !!! after block name some file have meta-data (delf3d fourier file), so include this in header !!!
-    self.header.append(rec)
-    self.nhdr = len(self.header)
+        # !!! after block name some file have meta-data (delf3d fourier file), so include this in header !!!
+        self.header.append(rec)
+        self.nhdr = len(self.header)
 
-    # pass tekal block data header
-    rec       = fid.readline()
-    n         = n+1
-    self.npts = int(rec.split()[0])
-    self.nvar = int(rec.split()[1])
-    if len(rec.split())==2:
-       self.nx   = self.npts
-       self.ny   = 1
-    else:
-       self.nx   = int(rec.split()[2]) # npts
-       self.ny   = int(rec.split()[3]) # 1
+        # pass tekal block data header
+        rec = fid.readline()
+        n = n + 1
+        self.npts = int(rec.split()[0])
+        self.nvar = int(rec.split()[1])
+        if len(rec.split()) == 2:
+            self.nx = self.npts
+            self.ny = 1
+        else:
+            self.nx = int(rec.split()[2])  # npts
+            self.ny = int(rec.split()[3])  # 1
 
-    # pass tekal block data
-    for i in range(self.npts):
-      rec = fid.readline()
-      n   = n+1
-    return self
+        # pass tekal block data
+        for i in range(self.npts):
+            rec = fid.readline()
+            n = n + 1
+        return self
 
-  def load(self,fid):
-    """load data from 1 block (specified by index)
-    from an opened tekal file identifier into a
-    3D numpy array that contains all variables from that block
-    The shape of the returned 3D array(nvar,nx,ny) is
-    0:          tekal columns: variables (all ascii columns)
-    1: reshaped tekal rows   : nx for 2D data, npts for 1D data (all ascii rows)
-    2: reshaped tekal rows   : ny for 2D data,    1 for 1D data
-    The tekalblock object
+    def load(self, fid):
+        """load data from 1 block (specified by index)
+        from an opened tekal file identifier into a
+        3D numpy array that contains all variables from that block
+        The shape of the returned 3D array(nvar,nx,ny) is
+        0:          tekal columns: variables (all ascii columns)
+        1: reshaped tekal rows   : nx for 2D data, npts for 1D data (all ascii rows)
+        2: reshaped tekal rows   : ny for 2D data,    1 for 1D data
+        The tekalblock object
 
-    >> fid = open(filename)
-    >> tb = tekalblock.info(fid,index)
-    >> M = tb.load(fid)
-    >> fid.close()
-    """
-    import numpy as np
+        >> fid = open(filename)
+        >> tb = tekalblock.info(fid,index)
+        >> M = tb.load(fid)
+        >> fid.close()
+        """
+        import numpy as np
 
-    # pass comment block
-    rec = fid.readline()
-    while rec[0]=='*':
-      rec = fid.readline()
-    rec = fid.readline()
-    npts = int(rec.split()[0])
-    nvar = int(rec.split()[1])
-    if len(rec.split())==2:
-       nx   = npts
-       ny   = 1
-    else:
-       nx   = int(rec.split()[2]) # npts
-       ny   = int(rec.split()[3]) # 1
-    if not(self.npts == npts): print('error')
-    if not(self.nvar == nvar): print('error')
-    if not(self.nx   == nx  ): print('error')
-    if not(self.ny   == ny  ): print('error')
-    M = np.zeros([self.nvar,self.nx,self.ny])
+        # pass comment block
+        rec = fid.readline()
+        while rec[0] == "*":
+            rec = fid.readline()
+        rec = fid.readline()
+        npts = int(rec.split()[0])
+        nvar = int(rec.split()[1])
+        if len(rec.split()) == 2:
+            nx = npts
+            ny = 1
+        else:
+            nx = int(rec.split()[2])  # npts
+            ny = int(rec.split()[3])  # 1
+        if not (self.npts == npts):
+            print("error")
+        if not (self.nvar == nvar):
+            print("error")
+        if not (self.nx == nx):
+            print("error")
+        if not (self.ny == ny):
+            print("error")
+        M = np.zeros([self.nvar, self.nx, self.ny])
 
-    # load data block
-    for ix in range(self.nx):
-        for iy in range(self.ny):
-            rec        = fid.readline()
-            values     = rec.split()
-#            M[:,ix,iy] = values
-            M[:,ix,iy] = values[0:self.nvar]
+        # load data block
+        for ix in range(self.nx):
+            for iy in range(self.ny):
+                rec = fid.readline()
+                values = rec.split()
+                #            M[:,ix,iy] = values
+                M[:, ix, iy] = values[0 : self.nvar]
 
-    self.data = M
-    return M
+        self.data = M
+        return M
 
-  def check(self):
-    """Check block has valid content """
-    assert self.header is not []
-    assert self.nhdr is not None
-    assert self.name is not None
-    assert self.npts is not None
-    assert self.nvar is not None
-    assert self.nx is not None
-    assert self.ny is not None
-    assert self.data is not None
+    def check(self):
+        """Check block has valid content"""
+        assert self.header is not []
+        assert self.nhdr is not None
+        assert self.name is not None
+        assert self.npts is not None
+        assert self.nvar is not None
+        assert self.nx is not None
+        assert self.ny is not None
+        assert self.data is not None
 
-  def copy(self):
-    """Create copy of tekalblock"""
-    copy = tekalblock()
-    copy.header = self.header[:]
-    copy.nhdr   = self.nhdr
-    copy.name   = self.name
-    copy.npts   = self.npts
-    copy.nvar   = self.nvar
-    copy.nx     = self.nx
-    copy.ny     = self.ny
-    copy.data   = self.data.copy()
-    return copy
+    def copy(self):
+        """Create copy of tekalblock"""
+        copy = tekalblock()
+        copy.header = self.header[:]
+        copy.nhdr = self.nhdr
+        copy.name = self.name
+        copy.npts = self.npts
+        copy.nvar = self.nvar
+        copy.nx = self.nx
+        copy.ny = self.ny
+        copy.data = self.data.copy()
+        return copy
 
 
 class tekal:
-  """tekal file class """
-  def __init__(self,filename):
-    self.filename  = filename
-    self.blocks    = [] # list of tekalblocks
+    """tekal file class"""
 
-  def append(self,block):
-    """append block to tekal structure"""
-    block.check()
-    self.blocks.append(block)
-    # set index
-    self.blocks[-1].index = len(self.blocks)-1
+    def __init__(self, filename):
+        self.filename = filename
+        self.blocks = []  # list of tekalblocks
 
-  def __str__(self):
-    """print meta-info of tekal file"""
-    txt = self.blocks[0].strheader()
-    for index in range(len(self.blocks)):
-      txt = txt + str(self.blocks[index])
-    return txt
+    def append(self, block):
+        """append block to tekal structure"""
+        block.check()
+        self.blocks.append(block)
+        # set index
+        self.blocks[-1].index = len(self.blocks) - 1
 
-  def info(self):
-    """get meta-info of tekal file """
-    fid = open(self.filename,"rb")
-    index = 0
-    while True:
-      B = tekalblock()
-      B.info(fid,index)
-      if B.npts==None:
-         return
-      index = index + 1
-      self.blocks.append(B)
-    fid.close()
+    def __str__(self):
+        """print meta-info of tekal file"""
+        txt = self.blocks[0].strheader()
+        for index in range(len(self.blocks)):
+            txt = txt + str(self.blocks[index])
+        return txt
 
-  def read(self,index):
-    """load data from 1 block (specified by index)
-    from an unopened tekal filename into a
-    3D numpy array that contains all variables from that block
-    The shape of the returned 3D array(nvar,nx,ny) is
-    0:          tekal columns: variables (all ascii columns)
-    1: reshaped tekal rows   : nx for 2D data, npts for 1D data (all ascii rows)
-    2: reshaped tekal rows   : ny for 2D data,    1 for 1D data
+    def info(self):
+        """get meta-info of tekal file"""
+        fid = open(self.filename, "rb")
+        index = 0
+        while True:
+            B = tekalblock()
+            B.info(fid, index)
+            if B.npts == None:
+                return
+            index = index + 1
+            self.blocks.append(B)
+        fid.close()
 
-    >> M = tekal.read(filename,index)
-    """
-    fid = open(self.filename,"rb")
-    fid.seek(self.blocks[index].tell)
-    M = self.blocks[index].load(fid)
-    fid.close()
-    return M
+    def read(self, index):
+        """load data from 1 block (specified by index)
+        from an unopened tekal filename into a
+        3D numpy array that contains all variables from that block
+        The shape of the returned 3D array(nvar,nx,ny) is
+        0:          tekal columns: variables (all ascii columns)
+        1: reshaped tekal rows   : nx for 2D data, npts for 1D data (all ascii rows)
+        2: reshaped tekal rows   : ny for 2D data,    1 for 1D data
 
-  def write(self):
-    """write data to file
+        >> M = tekal.read(filename,index)
+        """
+        fid = open(self.filename, "rb")
+        fid.seek(self.blocks[index].tell)
+        M = self.blocks[index].load(fid)
+        fid.close()
+        return M
 
-    Example:
-    import copy
-    D = tek.tekal(polfile1)           # initialize
-    D.info(polfile)                   # get     file meta-data: all blocks
+    def write(self):
+        """write data to file
 
-    E = tek.tekal(polfile2)           # initialize tekal file structure
-    P = tek.tekalblock()              # initialize tekal block
-    for k in range(99,102):           # loop through indices
-      D.read(k)                       # load data for index k
-      P = copy.copy(D.blocks[k])
-      P.name = '{:s}_{:03g}'.format(P.name,k)
-      P.header[-1] = P.name + '\n'    # Not sure about the Delft3D fourier type files (please check)
-      E.append(P)                     # append tekal block to tekal file structure
-    E.write()                         # write file
-    """
-    fid = open(self.filename,"a",0)
-    for index in range(len(self.blocks)):
-      print(index)
-      self.blocks[index].check()
-      fid.write(''.join(self.blocks[index].header))
-      print(''.join(self.blocks[index].header))
-      if self.blocks[index].ny == 1:
-        fid.write('{:g} {:g}\n'.format(self.blocks[index].npts,self.blocks[index].nvar))
-      else:
-        fid.write('{:g} {:g} {:g}\n'.format(self.blocks[index].npts,self.blocks[index].nvar,self.blocks[index].ny))
-      for iy in range(self.blocks[index].ny):
-        for ix in range(self.blocks[index].nx):
-          fid.write(' '.join(['{:f}'.format(v) for v in self.blocks[index].data[:,ix,iy]]) + '\n')
-    fid.close()
+        Example:
+        import copy
+        D = tek.tekal(polfile1)           # initialize
+        D.info(polfile)                   # get     file meta-data: all blocks
+
+        E = tek.tekal(polfile2)           # initialize tekal file structure
+        P = tek.tekalblock()              # initialize tekal block
+        for k in range(99,102):           # loop through indices
+          D.read(k)                       # load data for index k
+          P = copy.copy(D.blocks[k])
+          P.name = '{:s}_{:03g}'.format(P.name,k)
+          P.header[-1] = P.name + '\n'    # Not sure about the Delft3D fourier type files (please check)
+          E.append(P)                     # append tekal block to tekal file structure
+        E.write()                         # write file
+        """
+        fid = open(self.filename, "a", 0)
+        for index in range(len(self.blocks)):
+            print(index)
+            self.blocks[index].check()
+            fid.write("".join(self.blocks[index].header))
+            print("".join(self.blocks[index].header))
+            if self.blocks[index].ny == 1:
+                fid.write(
+                    "{:g} {:g}\n".format(
+                        self.blocks[index].npts, self.blocks[index].nvar
+                    )
+                )
+            else:
+                fid.write(
+                    "{:g} {:g} {:g}\n".format(
+                        self.blocks[index].npts,
+                        self.blocks[index].nvar,
+                        self.blocks[index].ny,
+                    )
+                )
+            for iy in range(self.blocks[index].ny):
+                for ix in range(self.blocks[index].nx):
+                    fid.write(
+                        " ".join(
+                            [
+                                "{:f}".format(v)
+                                for v in self.blocks[index].data[:, ix, iy]
+                            ]
+                        )
+                        + "\n"
+                    )
+        fid.close()

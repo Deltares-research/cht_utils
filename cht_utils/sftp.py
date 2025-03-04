@@ -11,10 +11,11 @@ import os
 from stat import S_ISDIR
 import posixpath
 
+
 class SSHSession(object):
     # Usage:
     # Detects DSA or RSA from key_file, either as a string filename or a
-    # file object.  Password auth is possible, but I will judge you for 
+    # file object.  Password auth is possible, but I will judge you for
     # using it. So:
     # ssh=SSHSession('targetserver.com','root',key_file=open('mykey.pem','r'))
     # ssh=SSHSession('targetserver.com','root',key_file='/home/me/mykey.pem')
@@ -24,14 +25,14 @@ class SSHSession(object):
     # ssh.get_all('/path/to/remote/source/dir','/path/to/local/destination')
     # ssh.command('echo "Command to execute"')
 
-    def __init__(self,hostname,username='root',key_file=None,password=None):
+    def __init__(self, hostname, username="root", key_file=None, password=None):
         #
-        #  Accepts a file-like object (anything with a readlines() function)  
-        #  in either dss_key or rsa_key with a private key.  Since I don't 
+        #  Accepts a file-like object (anything with a readlines() function)
+        #  in either dss_key or rsa_key with a private key.  Since I don't
         #  ever intend to leave a server open to a password auth.
         #
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((hostname,22))
+        self.sock.connect((hostname, 22))
         self.t = paramiko.Transport(self.sock)
         self.t.start_client()
         # keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
@@ -52,12 +53,12 @@ class SSHSession(object):
         #     self.t.auth_publickey(username, pkey)
         # else:
         #     if password is not None:
-        self.t.auth_password(username,password,fallback=False)
-#            else: raise Exception('Must supply either key_file or password')
-        self.sftp=paramiko.SFTPClient.from_transport(self.t)
+        self.t.auth_password(username, password, fallback=False)
+        #            else: raise Exception('Must supply either key_file or password')
+        self.sftp = paramiko.SFTPClient.from_transport(self.t)
 
-    def command(self,cmd):
-        #  Breaks the command by lines, sends and receives 
+    def command(self, cmd):
+        #  Breaks the command by lines, sends and receives
         #  each line and its output separately
         #
         #  Returns the server response text as a string
@@ -66,26 +67,26 @@ class SSHSession(object):
         chan.get_pty()
         chan.invoke_shell()
         chan.settimeout(20.0)
-        ret=''
+        ret = ""
         try:
-            ret+=chan.recv(1024)
+            ret += chan.recv(1024)
         except:
-            chan.send('\n')
-            ret+=chan.recv(1024)
-        for line in cmd.split('\n'):
-            chan.send(line.strip() + '\n')
-            ret+=chan.recv(1024)
+            chan.send("\n")
+            ret += chan.recv(1024)
+        for line in cmd.split("\n"):
+            chan.send(line.strip() + "\n")
+            ret += chan.recv(1024)
         return ret
 
-    def put(self,localfile,remotefile):
+    def put(self, localfile, remotefile):
         #  Copy localfile to remotefile, overwriting or creating as needed.
-        self.sftp.put(localfile,remotefile)
+        self.sftp.put(localfile, remotefile)
 
-    def put_all(self,localpath,remotepath):
+    def put_all(self, localpath, remotepath):
         #  recursively upload a full directory
         current_path = os.getcwd()
         os.chdir(os.path.split(localpath)[0])
-        parent=os.path.split(localpath)[1]
+        parent = os.path.split(localpath)[1]
         for walker in os.walk(parent):
             try:
                 self.sftp.mkdir(remotepath + "/" + walker[0].replace("\\", "/"))
@@ -94,33 +95,33 @@ class SSHSession(object):
             for file in walker[2]:
                 remote_file = remotepath + "/" + walker[0] + "/" + file
                 remote_file = remote_file.replace("\\", "/")
-                self.put(os.path.join(walker[0],file), remote_file)
-        os.chdir(current_path)        
+                self.put(os.path.join(walker[0], file), remote_file)
+        os.chdir(current_path)
 
-    def get(self,remotefile,localfile):
+    def get(self, remotefile, localfile):
         #  Copy remotefile to localfile, overwriting or creating as needed.
-        self.sftp.get(remotefile,localfile)
+        self.sftp.get(remotefile, localfile)
 
-    def sftp_walk(self,remotepath):
-        # Kindof a stripped down  version of os.walk, implemented for 
+    def sftp_walk(self, remotepath):
+        # Kindof a stripped down  version of os.walk, implemented for
         # sftp.  Tried running it flat without the yields, but it really
         # chokes on big directories.
-        path=remotepath
-        files=[]
-        folders=[]
+        path = remotepath
+        files = []
+        folders = []
         for f in self.sftp.listdir_attr(remotepath):
             if S_ISDIR(f.st_mode):
                 folders.append(f.filename)
             else:
                 files.append(f.filename)
-#        print (path,folders,files)
-        yield path,folders,files
+        #        print (path,folders,files)
+        yield path, folders, files
         for folder in folders:
-            new_path=os.path.join(remotepath,folder).replace("\\","/")
+            new_path = os.path.join(remotepath, folder).replace("\\", "/")
             for x in self.sftp_walk(new_path):
                 yield x
 
-    def get_all(self,remotepath,localpath):
+    def get_all(self, remotepath, localpath):
         #  recursively download a full directory
         #  Harder than it sounded at first, since paramiko won't walk
         #
@@ -128,24 +129,28 @@ class SSHSession(object):
         # ssh user@host 'tar -cz /source/folder' | tar -xz
 
         self.sftp.chdir(os.path.split(remotepath)[0])
-        parent=os.path.split(remotepath)[1]
+        parent = os.path.split(remotepath)[1]
         try:
             os.mkdir(localpath)
         except:
             pass
         for walker in self.sftp_walk(parent):
             try:
-                os.mkdir(os.path.join(localpath,walker[0]))
+                os.mkdir(os.path.join(localpath, walker[0]))
             except:
                 pass
             for file in walker[2]:
-                self.get(os.path.join(walker[0],file),os.path.join(localpath,walker[0],file))
-    def write_command(self,text,remotefile):
+                self.get(
+                    os.path.join(walker[0], file),
+                    os.path.join(localpath, walker[0], file),
+                )
+
+    def write_command(self, text, remotefile):
         #  Writes text to remotefile, and makes remotefile executable.
         #  This is perhaps a bit niche, but I was thinking I needed it.
         #  For the record, I was incorrect.
-        self.sftp.open(remotefile,'w').write(text)
-        self.sftp.chmod(remotefile,755)
+        self.sftp.open(remotefile, "w").write(text)
+        self.sftp.chmod(remotefile, 755)
 
     def rmtree(self, remotepath, level=0):
         for f in self.sftp.listdir_attr(remotepath):
@@ -154,7 +159,7 @@ class SSHSession(object):
                 self.rmtree(rpath, level=(level + 1))
             else:
                 rpath = posixpath.join(remotepath, f.filename)
-#                print('removing %s%s' % ('    ' * level, rpath))
+                #                print('removing %s%s' % ('    ' * level, rpath))
                 self.sftp.remove(rpath)
-#        print('removing %s%s' % ('    ' * level, remotepath))
+        #        print('removing %s%s' % ('    ' * level, remotepath))
         self.sftp.rmdir(remotepath)
