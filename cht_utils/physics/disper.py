@@ -1,4 +1,4 @@
-'''
+"""
 DISPER  Linear dispersion relation.
 
 absolute error in k*h < 5.0e-16 for all k*h
@@ -16,17 +16,18 @@ k = wave number
 
 Example
 k = disper(2*pi/5,5,9.81);
-'''
+"""
 
 import numpy as np
 
+
 def disper(w, h, g=9.81):
     if not type(w) == list:
-        w=[w]
+        w = [w]
     if not type(h) == list:
-        h=[h]
-    w2 = [iw**2 * ih / g for (iw,ih) in zip(w,h)]
-    q = [iw2 / (1 - np.exp(-(iw2**(5/4))))**(2/5) for iw2 in w2]
+        h = [h]
+    w2 = [iw**2 * ih / g for (iw, ih) in zip(w, h)]
+    q = [iw2 / (1 - np.exp(-(iw2 ** (5 / 4)))) ** (2 / 5) for iw2 in w2]
 
     thq = np.tanh(q)
     thq2 = 1 - thq**2
@@ -50,13 +51,13 @@ def disper(w, h, g=9.81):
 
     return k
 
+
 def disper_fentonmckee(sigma, d, g=9.81):
 
     def coth(x):
-        return 1. / np.tanh(x)
+        return 1.0 / np.tanh(x)
 
-    k = (sigma**2 / g) * (coth(sigma * np.sqrt(d / g))**(3 / 2))**(2 / 3)
+    k = (sigma**2 / g) * (coth(sigma * np.sqrt(d / g)) ** (3 / 2)) ** (2 / 3)
     # k = sigma**2 / g * coth((sigma * np.sqrt(d / g))**(3 / 2))**(2 / 3)
 
     return k
-
