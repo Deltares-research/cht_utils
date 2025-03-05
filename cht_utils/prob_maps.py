@@ -8,7 +8,6 @@ Created on Wed Mar 15 13:57:00 2023
 import xarray as xr
 import numpy as np
 import cht_utils.fileops as fo
-import numpy as np
 
 
 def prob_floodmaps(file_list, variables, prcs, delete=False, output_file_name=None):
