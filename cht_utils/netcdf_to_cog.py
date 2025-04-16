@@ -1,38 +1,49 @@
 import xarray as xr
 import rioxarray
-
-
-# Load the NetCDF file
-ds = xr.open_dataset("D:/metocean_data/open/NGDC/crm_vol2_2023.nc")
-
-# Select the variable you want to export
-# Replace 'your_variable' with the actual variable name
-da = ds['z']
-
-# If necessary, select a specific time slice or level
-# da = da.isel(time=0)  # if there's a time dimension
-
-# Ensure the data has a CRS and spatial coordinates set
-da.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
-da.rio.write_crs("EPSG:4326", inplace=True)  # or your appropriate CRS
-
-# Export to a GeoTIFF (initial step before creating a COG)
-da.rio.to_raster("D:/metocean_data/open/NGDC/crm_vol2_2023.tif")
-
-# Convert the GeoTIFF to a COG
 from rio_cogeo.cogeo import cog_translate
 from rio_cogeo.profiles import cog_profiles
 from rasterio import Env
-from rasterio.shutil import copy as rio_copy
 
-# Define profile
-profile = cog_profiles.get("deflate")
+def netcdf_to_cog(netcdf_path, variable_name, output_cog_path="output_cog.tif", time_index=None):
+    """
+    Convert a NetCDF variable to a Cloud-Optimized GeoTIFF (COG).
 
-# Translate to COG
-with Env():
-    cog_translate(
-        "D:/metocean_data/open/NGDC/crm_vol2_2023.tif",
-        "D:/metocean_data/open/NGDC/crm_vol2_2023_cog.tif",
-        profile,
-        in_memory=False,
-    )
+    Parameters:
+        netcdf_path (str): Path to the NetCDF file.
+        variable_name (str): Name of the variable to extract.
+        output_cog_path (str): Output path for the COG.
+        time_index (int or None): Optional index for time dimension if present.
+    """
+    # Load dataset
+    ds = xr.open_dataset(netcdf_path)
+
+    # Extract variable
+    if variable_name not in ds:
+        raise ValueError(f"Variable '{variable_name}' not found in the NetCDF file.")
+    da = ds[variable_name]
+
+    # Handle time slicing if needed
+    if "time" in da.dims and time_index is not None:
+        da = da.isel(time=time_index)
+
+    # Set spatial dimensions
+    da.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+
+    # Set CRS (modify as needed)
+    da.rio.write_crs("EPSG:4326", inplace=True)
+
+    # Save to temporary GeoTIFF
+    temp_tif = "temp_output.tif"
+    da.rio.to_raster(temp_tif)
+
+    # Convert to Cloud-Optimized GeoTIFF
+    profile = cog_profiles.get("deflate")
+    with Env():
+        cog_translate(
+            temp_tif,
+            output_cog_path,
+            profile,
+            in_memory=False,
+        )
+
+    print(f"COG saved to: {output_cog_path}")
