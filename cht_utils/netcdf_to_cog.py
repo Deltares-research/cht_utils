@@ -1,10 +1,7 @@
 import xarray as xr
-import rioxarray
-from rio_cogeo.cogeo import cog_translate
-from rio_cogeo.profiles import cog_profiles
-from rasterio import Env
+from pyproj import CRS
 
-def netcdf_to_cog(netcdf_path, variable_name, output_cog_path="output_cog.tif", time_index=None):
+def netcdf_to_cog(netcdf_path, variable_name, output_cog_path, time_index=None):
     """
     Convert a NetCDF variable to a Cloud-Optimized GeoTIFF (COG).
 
@@ -14,36 +11,70 @@ def netcdf_to_cog(netcdf_path, variable_name, output_cog_path="output_cog.tif", 
         output_cog_path (str): Output path for the COG.
         time_index (int or None): Optional index for time dimension if present.
     """
-    # Load dataset
-    ds = xr.open_dataset(netcdf_path)
 
-    # Extract variable
-    if variable_name not in ds:
-        raise ValueError(f"Variable '{variable_name}' not found in the NetCDF file.")
-    da = ds[variable_name]
+    try:
 
-    # Handle time slicing if needed
-    if "time" in da.dims and time_index is not None:
-        da = da.isel(time=time_index)
+        # Load dataset
+        ds = xr.open_dataset(netcdf_path)
 
-    # Set spatial dimensions
-    da.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+        # Extract variable
+        if variable_name not in ds:
+            raise ValueError(f"Variable '{variable_name}' not found in the NetCDF file.")
+        da = ds[variable_name]
 
-    # Set CRS (modify as needed)
-    da.rio.write_crs("EPSG:4326", inplace=True)
+        # Handle time slicing if needed
+        if "time" in da.dims and time_index is not None:
+            da = da.isel(time=time_index)
 
-    # Save to temporary GeoTIFF
-    temp_tif = "temp_output.tif"
-    da.rio.to_raster(temp_tif)
+        # Check for CRS
+        if "crs" not in ds:
+            # Assume 4326 if no CRS is found
+            crs = CRS.from_epsg(4326)
+        else:
+            # Get the CRS from the dataset
+            wkt_options = ["crs_wkt", "spatial_ref"]
+            wkt = None
+            for option in wkt_options:
+                if option in ds["crs"].attrs:
+                    wkt = ds["crs"].attrs[option]
+                    break
 
-    # Convert to Cloud-Optimized GeoTIFF
-    profile = cog_profiles.get("deflate")
-    with Env():
-        cog_translate(
-            temp_tif,
+            if wkt is None:
+                # Assume 4326 if no WKT is found
+                crs = CRS.from_epsg(4326)    
+            else:
+                crs = CRS.from_wkt(wkt)
+                if crs.to_epsg() is None:
+                    if "NAD83" in crs.name:
+                        # Handle NAD83 case
+                        crs = CRS.from_epsg(4269)
+
+        crs_str = f"EPSG:{crs.to_epsg()}"
+
+        # Set spatial dimensions
+        # Check if crs is projected or geographic
+        if crs.is_projected:
+            da.rio.set_spatial_dims(x_dim="x", y_dim="y", inplace=True)
+        else:
+            # For geographic coordinates, use lon/lat
+            da.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+
+        # Set CRS (modify as needed)
+        da.rio.write_crs(crs_str, inplace=True)
+
+        # And write to COG 
+        da.rio.to_raster(
             output_cog_path,
-            profile,
-            in_memory=False,
+            driver="COG",
+            compress="deflate",       # or "lzw" (optional compression)
+            blocksize=512,            # typical block size (optional)
+            overview_resampling="average",  # build internal overviews
+            dtype=da.dtype            # preserve original data type
         )
+        print(f"COG saved to: {output_cog_path}")
 
-    print(f"COG saved to: {output_cog_path}")
+        return True
+    
+    except Exception as e:
+        print(f"Error during conversion: {e}")
+        return False
