@@ -1,49 +1,84 @@
-import xarray as xr
-import rioxarray
-from rio_cogeo.cogeo import cog_translate
-from rio_cogeo.profiles import cog_profiles
-from rasterio import Env
+import os
 
-def netcdf_to_cog(netcdf_path, variable_name, output_cog_path, time_index=None):
+import rioxarray
+import rasterio
+from pyproj import CRS
+
+def is_cog(tif_path):
     """
-    Convert a NetCDF variable to a Cloud-Optimized GeoTIFF (COG).
+    Check if a GeoTIFF is a Cloud-Optimized GeoTIFF (COG).
 
     Parameters:
-        netcdf_path (str): Path to the NetCDF file.
-        variable_name (str): Name of the variable to extract.
-        output_cog_path (str): Output path for the COG.
-        time_index (int or None): Optional index for time dimension if present.
+        tif_path (str): Path to the GeoTIFF file.
+
+    Returns:
+        bool: True if the file is a COG, False otherwise.
     """
-    # Load dataset
-    ds = xr.open_dataset(netcdf_path)
+    try:
+        with rasterio.open(tif_path) as src:
+            # Check if the file is tiled
+            if not src.is_tiled:
+                return False
 
-    # Extract variable
-    if variable_name not in ds:
-        raise ValueError(f"Variable '{variable_name}' not found in the NetCDF file.")
-    da = ds[variable_name]
+            # Check for overviews (COGs should have overviews)
+            if not src.overviews(1):
+                return False
 
-    # Handle time slicing if needed
-    if "time" in da.dims and time_index is not None:
-        da = da.isel(time=time_index)
+            # Check for proper metadata (COGs have 'COG' in their metadata)
+            metadata = src.tags()
+            if "COG" not in metadata.get("TIFFTAG_IMAGELENGTH", ""):
+                return False
 
-    # Set spatial dimensions
-    da.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
+            # If all checks pass, the file is a COG
+            return True
 
-    # Set CRS (modify as needed)
-    da.rio.write_crs("EPSG:4326", inplace=True)
+    except Exception as e:
+        print(f"Error checking COG: {e}")
+        return False
 
-    # Save to temporary GeoTIFF
-    temp_tif = "temp_output.tif"
-    da.rio.to_raster(temp_tif)
 
-    # Convert to Cloud-Optimized GeoTIFF
-    profile = cog_profiles.get("deflate")
-    with Env():
-        cog_translate(
-            temp_tif,
+
+def geotiff_to_cog(geotiff_path, output_cog_path, resampling="average"):
+    """
+    Convert a GeoTIFF to a Cloud-Optimized GeoTIFF (COG) using rioxarray.
+
+    Parameters:
+        geotiff_path (str): Path to the input GeoTIFF file.
+        output_cog_path (str): Path to the output COG file.
+        resampling (str): Resampling method for overviews (default: 'average').
+    """
+    try:
+
+        # First check if the file is already a COG
+        if is_cog(geotiff_path):
+            print(f"{geotiff_path} is already a COG ! Copying to {output_cog_path}")
+            # Copy the file to the new location
+            os.path.copy(geotiff_path, output_cog_path)
+            return True
+
+        # Load GeoTIFF as a DataArray with spatial referencing
+        da = rioxarray.open_rasterio(geotiff_path, masked=True)
+
+        # Get CRS from file (default to EPSG:4326 if not found)
+        crs = da.rio.crs
+        if crs is None:
+            print("No CRS found in source; defaulting to EPSG:4326")
+            crs = CRS.from_epsg(4326)
+            da = da.rio.write_crs(crs)
+
+        # Write to COG
+        da.rio.to_raster(
             output_cog_path,
-            profile,
-            in_memory=False,
+            driver="COG",
+            compress="deflate",
+            blocksize=512,
+            overview_resampling=resampling,
+            dtype=str(da.dtype)
         )
 
-    print(f"COG saved to: {output_cog_path}")
+        print(f"COG saved to: {output_cog_path}")
+        return True
+
+    except Exception as e:
+        print(f"Error during conversion: {e}")
+        return False
