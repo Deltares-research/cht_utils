@@ -115,21 +115,25 @@ def pol2geojson(file_name_in, file_name_out, crs=None):
     gdf.to_file(file_name_out, driver="GeoJSON")
 
 
-def gdf2pli(gdf, file_name, header=True, name_string="name"):
+def gdf2pli(gdf, file_name, header=True, name_string="name", add_point_name=False):
     if gdf.crs.is_geographic:
         fid = open(file_name, "w")
         for index, row in gdf.iterrows():
             nrp = len(row["geometry"].coords)
             if header:
                 if name_string in row:
-                    fid.write(row[name_string] + "\n")
+                    header_string = row[name_string]
                 else:
-                    fid.write("BL" + str(index + 1).zfill(4) + "\n")
+                    header_string = "BL" + str(index + 1).zfill(4)
+                fid.write(header_string + "\n")
                 fid.write(str(nrp) + " " + "2\n")
             for ip in range(nrp):
                 x = row["geometry"].coords[ip][0]
                 y = row["geometry"].coords[ip][1]
-                string = f"{x:12.6f}{y:12.6f}\n"
+                if add_point_name: # add header string + _0001 etc
+                    string = f"{x:12.6f}{y:12.6f} {header_string}_{str(ip + 1).zfill(4)}\n"
+                else:
+                    string = f"{x:12.6f}{y:12.6f}\n"
                 fid.write(string)
         fid.close()
     else:
@@ -137,12 +141,18 @@ def gdf2pli(gdf, file_name, header=True, name_string="name"):
         for index, row in gdf.iterrows():
             nrp = len(row["geometry"].coords)
             if header:
-                fid.write("BL" + str(index).zfill(4) + "\n")
-                fid.write(str(nrp) + " " + "2\n")
+                if name_string in row:
+                    header_string = row[name_string]
+                else:
+                    header_string = "BL" + str(index + 1).zfill(4)
+                fid.write(header_string + "\n")
             for ip in range(nrp):
                 x = row["geometry"].coords[ip][0]
                 y = row["geometry"].coords[ip][1]
-                string = f"{x:12.1f}{y:12.1f}\n"
+                if add_point_name:
+                    string = f"{x:12.1f}{y:12.1f} {header_string}_{str(ip + 1).zfill(4)}\n"
+                else:
+                    string = f"{x:12.1f}{y:12.1f}\n"
                 fid.write(string)
         fid.close()
 
