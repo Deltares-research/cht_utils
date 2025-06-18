@@ -126,6 +126,7 @@ def gdf2pli(gdf, file_name, header=True, name_string="name", add_point_name=Fals
                 else:
                     header_string = "BL" + str(index + 1).zfill(4)
                 fid.write(header_string + "\n")
+                # Number of vertices and columns
                 fid.write(str(nrp) + " " + "2\n")
             for ip in range(nrp):
                 x = row["geometry"].coords[ip][0]
@@ -146,6 +147,8 @@ def gdf2pli(gdf, file_name, header=True, name_string="name", add_point_name=Fals
                 else:
                     header_string = "BL" + str(index + 1).zfill(4)
                 fid.write(header_string + "\n")
+                # Number of vertices and columns
+                fid.write(str(nrp) + " " + "2\n")
             for ip in range(nrp):
                 x = row["geometry"].coords[ip][0]
                 y = row["geometry"].coords[ip][1]
