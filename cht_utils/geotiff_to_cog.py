@@ -1,8 +1,10 @@
 import os
+import shutil
 
 import rioxarray
 import rasterio
 from pyproj import CRS
+# from rio_cogeo.cogeo import cog_validate
 
 def is_cog(tif_path):
     """
@@ -24,10 +26,13 @@ def is_cog(tif_path):
             if not src.overviews(1):
                 return False
 
-            # Check for proper metadata (COGs have 'COG' in their metadata)
-            metadata = src.tags()
-            if "COG" not in metadata.get("TIFFTAG_IMAGELENGTH", ""):
+            if len(src.overviews(1)) == 0:
                 return False
+
+            # # Check for proper metadata (COGs have 'COG' in their metadata)
+            # metadata = src.tags()
+            # if "COG" not in metadata.get("TIFFTAG_IMAGELENGTH", ""):
+            #     return False
 
             # If all checks pass, the file is a COG
             return True
@@ -53,7 +58,7 @@ def geotiff_to_cog(geotiff_path, output_cog_path, resampling="average"):
         if is_cog(geotiff_path):
             print(f"{geotiff_path} is already a COG ! Copying to {output_cog_path}")
             # Copy the file to the new location
-            os.path.copy(geotiff_path, output_cog_path)
+            shutil.copy(geotiff_path, output_cog_path)
             return True
 
         # Load GeoTIFF as a DataArray with spatial referencing
