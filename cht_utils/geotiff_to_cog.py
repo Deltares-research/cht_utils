@@ -78,7 +78,8 @@ def geotiff_to_cog(geotiff_path, output_cog_path, resampling="average"):
             compress="deflate",
             blocksize=512,
             overview_resampling=resampling,
-            dtype=str(da.dtype)
+            dtype=str(da.dtype),
+            bigtiff="YES"
         )
 
         print(f"COG saved to: {output_cog_path}")
