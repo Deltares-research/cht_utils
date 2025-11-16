@@ -129,12 +129,14 @@ def merge_nc_map(file_list, variables, prcs=None, delete=False, output_file_name
 
             # Get the attributes of the variable
             attrs = ds[v].attrs
+            timedim = ds[v].dims[0]
+            ntimes = ds.sizes[timedim]
 
             # Create a new dataarray with dimensions time, x, y, ens
             arr = xr.DataArray(
-                data=np.zeros((len(ds.timemax), npoints, nens)),
-                dims=("timemax", "nmesh2d_face", "ensemble"),
-                coords={"timemax": ds.timemax, "ensemble": range(nens)},
+                data=np.zeros((ntimes, npoints, nens)),
+                dims=(timedim, "nmesh2d_face", "ensemble"),
+                coords={timedim: ds[timedim], "ensemble": range(nens)},
             )
             ds[v] = arr
 
@@ -154,8 +156,8 @@ def merge_nc_map(file_list, variables, prcs=None, delete=False, output_file_name
                 indx = min(max(int(np.ceil(p * nens)) - 1, 0), nens - 1)
                 da = xr.DataArray(
                     data=arr[:, :, indx],
-                    dims=("timemax", "nmesh2d_face"),
-                    coords={"timemax": ds.timemax},
+                    dims=(timedim, "nmesh2d_face"),
+                    coords={timedim: ds[timedim]},
                 )
                 da.attrs = attrs
                 ds[v + "_" + str(round(p * 100))] = da
@@ -169,15 +171,17 @@ def merge_nc_map(file_list, variables, prcs=None, delete=False, output_file_name
 
             # Get the attributes of the variable
             attrs = ds[v].attrs
+            timedim = ds[v].dims[0]
+            ntimes = ds.sizes[timedim]
 
             # Create a dataarray with dimensions time, x, y, ens
             arr = xr.DataArray(
                 data=np.zeros(
-                    (len(ds.timemax), np.shape(ds.x)[0], np.shape(ds.x)[1], nens)
+                    (ntimes, np.shape(ds.x)[0], np.shape(ds.x)[1], nens)
                 ),
-                dims=("timemax", "n", "m", "ensemble"),
+                dims=(timedim, "n", "m", "ensemble"),
                 coords={
-                    "timemax": ds.timemax,
+                    timedim: ds[timedim],
                     "x": ds.x,
                     "y": ds.y,
                     "ensemble": range(nens),
@@ -201,8 +205,8 @@ def merge_nc_map(file_list, variables, prcs=None, delete=False, output_file_name
                 indx = min(max(int(np.ceil(p * nens)) - 1, 0), nens - 1)
                 da = xr.DataArray(
                     data=arr[:, :, indx],
-                    dims=("timemax", "n", "m"),
-                    coords={"timemax": ds.timemax, "x": ds.x, "y": ds.y},
+                    dims=(timedim, "n", "m"),
+                    coords={timedim: ds[timedim], "x": ds.x, "y": ds.y},
                 )
                 da.attrs = attrs
                 ds[v + "_" + str(round(p * 100))] = da
