@@ -4,7 +4,9 @@ import shutil
 import rioxarray
 import rasterio
 from pyproj import CRS
+# from osgeo import gdal
 # from rio_cogeo.cogeo import cog_validate
+from rasterio.shutil import copy as rio_copy
 
 def is_cog(tif_path):
     """
@@ -61,25 +63,49 @@ def geotiff_to_cog(geotiff_path, output_cog_path, resampling="average"):
             shutil.copy(geotiff_path, output_cog_path)
             return True
 
-        # Load GeoTIFF as a DataArray with spatial referencing
-        da = rioxarray.open_rasterio(geotiff_path, masked=True)
+        # gdal.Translate(
+        #     output_cog_path,
+        #     geotiff_path,
+        #     format="COG",
+        #     creationOptions=[
+        #         "COMPRESS=DEFLATE",
+        #         "BLOCKSIZE=512",
+        #         "NUM_THREADS=ALL_CPUS",
+        #         f"OVERVIEW_RESAMPLING={resampling.upper()}"
+        #     ]
+        # )
 
-        # Get CRS from file (default to EPSG:4326 if not found)
-        crs = da.rio.crs
-        if crs is None:
-            print("No CRS found in source; defaulting to EPSG:4326")
-            crs = CRS.from_epsg(4326)
-            da = da.rio.write_crs(crs)
 
-        # Write to COG
-        da.rio.to_raster(
-            output_cog_path,
-            driver="COG",
-            compress="deflate",
-            blocksize=512,
-            overview_resampling=resampling,
-            dtype=str(da.dtype)
-        )
+        with rasterio.open(geotiff_path) as src:
+            profile = src.profile
+            rio_copy(
+                src,
+                output_cog_path,
+                driver="COG",
+                compress="deflate",
+                blocksize=512,
+                overview_resampling=resampling  # or your method
+            )
+
+        # # Load GeoTIFF as a DataArray with spatial referencing
+        # da = rioxarray.open_rasterio(geotiff_path, masked=True)
+
+        # # Get CRS from file (default to EPSG:4326 if not found)
+        # crs = da.rio.crs
+        # if crs is None:
+        #     print("No CRS found in source; defaulting to EPSG:4326")
+        #     crs = CRS.from_epsg(4326)
+        #     da = da.rio.write_crs(crs)
+
+        # # Write to COG
+        # da.rio.to_raster(
+        #     output_cog_path,
+        #     driver="COG",
+        #     compress="deflate",
+        #     blocksize=512,
+        #     overview_resampling=resampling,
+        #     dtype=str(da.dtype)
+        # )
 
         print(f"COG saved to: {output_cog_path}")
         return True
