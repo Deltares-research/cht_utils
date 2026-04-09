@@ -23,6 +23,6 @@ class Argo:
         )
         w.create()
         if self.wait:
-            time.sleep(1) 
+            time.sleep(1)
             w.wait()
         return w

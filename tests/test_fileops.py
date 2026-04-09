@@ -1,7 +1,5 @@
 """Tests for cht_utils.fileops."""
 
-import os
-
 import pytest
 
 from cht_utils import fileops as fo

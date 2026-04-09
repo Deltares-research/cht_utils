@@ -1,9 +1,13 @@
 [default.extend-words]
 # Domain-specific terms - not typos
 cht = "cht"
+fo = "fo"
+coth = "coth"
+ein = "ein"
 
 [files]
 extend-exclude = [
     "*.js",
     "*.css",
+    "*.txt",
 ]

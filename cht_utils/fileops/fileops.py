@@ -1,9 +1,8 @@
 """Common file and directory operations using pathlib and shutil."""
 
-import os
 import shutil
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Union
 
 PathLike = Union[str, Path]
 
@@ -325,8 +324,6 @@ def list_all_files(src: PathLike) -> List[str]:
     return list_files(src, recursive=True)
 
 
-def list_files_recursive(
-    src: PathLike, pattern: str = "*"
-) -> List[str]:
+def list_files_recursive(src: PathLike, pattern: str = "*") -> List[str]:
     """Backward-compatible alias for ``list_files(src, pattern, recursive=True)``."""
     return list_files(src, pattern=pattern, recursive=True)

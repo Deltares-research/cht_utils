@@ -1,13 +1,9 @@
 """Tests for cht_utils.colors."""
 
-import os
-import tempfile
-
 import matplotlib as mpl
 import numpy as np
-import pytest
 
-from cht_utils.colors import cm2png, read_colormap, read_color_maps, rgb2hex
+from cht_utils.colors import cm2png, read_color_maps, read_colormap, rgb2hex
 
 
 class TestRgb2Hex:

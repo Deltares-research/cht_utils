@@ -6,7 +6,7 @@ JSON or CSV payload.
 
 import json
 import os
-from typing import Any, List, Union
+from typing import Any, Union
 
 
 def read_json_js(file_name: str) -> Any:
@@ -28,9 +28,7 @@ def read_json_js(file_name: str) -> Any:
     return json.loads(jsn_string)
 
 
-def write_json_js(
-    file_name: str, jsn: Union[list, dict], first_line: str
-) -> None:
+def write_json_js(file_name: str, jsn: Union[list, dict], first_line: str) -> None:
     """Write a JSON object to a JavaScript-wrapped file.
 
     Parameters

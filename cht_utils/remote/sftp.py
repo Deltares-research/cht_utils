@@ -2,11 +2,11 @@
 
 import os
 import posixpath
+import socket
 from stat import S_ISDIR
 from typing import Optional
 
 import paramiko
-import socket
 
 
 class SSHSession:

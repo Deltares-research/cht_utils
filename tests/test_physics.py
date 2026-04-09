@@ -1,14 +1,13 @@
 """Tests for cht_utils.physics subpackage."""
 
 import numpy as np
-import pytest
 
 from cht_utils.physics import (
+    deshoal,
     disper,
     disper_fentonmckee,
-    deshoal,
-    wavecelerity,
     split_waves_guza,
+    wavecelerity,
 )
 from cht_utils.physics.runup_vo21 import runup_vo21
 
@@ -91,10 +90,12 @@ class TestSplitWavesGuza:
 
         n = 100
         t = np.linspace(0, 10, n)
-        df = pd.DataFrame({
-            "z": 0.5 * np.sin(2 * np.pi * t / 5) + 1.0,
-            "u": 0.1 * np.sin(2 * np.pi * t / 5),
-        })
+        df = pd.DataFrame(
+            {
+                "z": 0.5 * np.sin(2 * np.pi * t / 5) + 1.0,
+                "u": 0.1 * np.sin(2 * np.pi * t / 5),
+            }
+        )
         zb = -1.0
         result = split_waves_guza(df, zb)
         assert "zin" in result.columns

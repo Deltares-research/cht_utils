@@ -36,7 +36,9 @@ def netcdf_to_cog(
         ds = xr.open_dataset(netcdf_path)
 
         if variable_name not in ds:
-            raise ValueError(f"Variable '{variable_name}' not found in the NetCDF file.")
+            raise ValueError(
+                f"Variable '{variable_name}' not found in the NetCDF file."
+            )
         da = ds[variable_name]
 
         if "time" in da.dims and time_index is not None:

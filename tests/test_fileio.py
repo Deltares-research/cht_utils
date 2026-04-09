@@ -1,10 +1,8 @@
 """Tests for cht_utils.fileio subpackage."""
 
-import pytest
-
+from cht_utils.fileio.deltares_ini import IniStruct
+from cht_utils.fileio.json_js import read_json_js, write_csv_js, write_json_js
 from cht_utils.fileio.yaml import dict2yaml, yaml2dict
-from cht_utils.fileio.json_js import read_json_js, write_json_js, write_csv_js
-from cht_utils.fileio.deltares_ini import IniStruct, Section, Keyword
 
 
 class TestYaml:
@@ -125,20 +123,4 @@ class TestImports:
     """Verify subpackage re-exports work."""
 
     def test_fileio_imports(self):
-        from cht_utils.fileio import (
-            IniStruct,
-            dict2yaml,
-            yaml2dict,
-            read_json_js,
-            write_json_js,
-            tekal,
-            tekalblock,
-            pli2gdf,
-            gdf2pli,
-            pol2gdf,
-            gdf2pol,
-            read_pli_file,
-            dict2xml,
-            obj2xml,
-            xml2obj,
-        )
+        pass

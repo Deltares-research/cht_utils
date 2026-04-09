@@ -4,7 +4,7 @@ import os
 import pathlib
 import tarfile
 from multiprocessing.pool import ThreadPool
-from typing import List, Optional
+from typing import List
 
 import boto3
 from botocore.exceptions import ClientError
@@ -149,9 +149,7 @@ class S3Session:
         if not quiet:
             print(f"Deleted {os.path.basename(file)}")
 
-    def make_folder(
-        self, bucket_name: str, s3_folder: str, quiet: bool = True
-    ) -> None:
+    def make_folder(self, bucket_name: str, s3_folder: str, quiet: bool = True) -> None:
         """Create a folder (prefix) in S3.
 
         Parameters

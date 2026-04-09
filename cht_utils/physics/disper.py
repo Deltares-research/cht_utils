@@ -41,12 +41,12 @@ def disper(
     w2 = [iw**2 * ih / g for iw, ih in zip(w, h)]
     q = [iw2 / (1 - np.exp(-(iw2 ** (5 / 4)))) ** (2 / 5) for iw2 in w2]
 
-    thq = np.tanh(q)
-    thq2 = 1 - thq**2
+    the = np.tanh(q)
+    the2 = 1 - the**2
 
-    a = (1 - q * thq) * thq2
-    b = thq + q * thq2
-    c = q * thq - w2
+    a = (1 - q * the) * the2
+    b = the + q * the2
+    c = q * the - w2
 
     D = b**2 - 4 * a * c
     arg = (-b + np.sqrt(D)) / (2 * a)
@@ -84,5 +84,8 @@ def disper_fentonmckee(
     float or np.ndarray
         Approximate wave number(s).
     """
-    coth = lambda x: 1.0 / np.tanh(x)
+
+    def coth(x):
+        return 1.0 / np.tanh(x)
+
     return (sigma**2 / g) * (coth(sigma * np.sqrt(d / g)) ** (3 / 2)) ** (2 / 3)

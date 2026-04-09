@@ -8,7 +8,7 @@ value conversion.
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Any, IO, Optional
+from typing import IO, Any
 
 
 class XMLObject:

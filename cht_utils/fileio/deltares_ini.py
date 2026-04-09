@@ -126,7 +126,11 @@ class IniStruct:
                     if "#" in ll:
                         ipos = [m.start() for m in re.finditer("#", ll)]
                         if len(ipos) > 1:
-                            ll = ll[: ipos[0]] + ll[ipos[0] + 1 : ipos[1]] + ll[ipos[1] + 1 :]
+                            ll = (
+                                ll[: ipos[0]]
+                                + ll[ipos[0] + 1 : ipos[1]]
+                                + ll[ipos[1] + 1 :]
+                            )
 
                     if "#" in ll:
                         j = ll.index("#")
@@ -196,9 +200,7 @@ class IniStruct:
         finally:
             fid.close()
 
-    def get_value(
-        self, section_name: str, keyword_name: str
-    ) -> Optional[Any]:
+    def get_value(self, section_name: str, keyword_name: str) -> Optional[Any]:
         """Get a keyword value from a named section.
 
         Parameters

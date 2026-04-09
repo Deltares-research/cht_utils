@@ -14,7 +14,7 @@ from cht_utils.fileio.pli_file import read_pli_file as read_pli_file
 from cht_utils.fileio.tekal import tekal as tekal
 from cht_utils.fileio.tekal import tekalblock as tekalblock
 from cht_utils.fileio.xml import dict2xml as dict2xml
-from cht_utils.fileio.xml import get_value as get_xml_value
+from cht_utils.fileio.xml import get_value as get_xml_value  # noqa: F401
 from cht_utils.fileio.xml import obj2xml as obj2xml
 from cht_utils.fileio.xml import xml2obj as xml2obj
 from cht_utils.fileio.yaml import dict2yaml as dict2yaml

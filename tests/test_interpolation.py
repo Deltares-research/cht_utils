@@ -1,7 +1,6 @@
 """Tests for cht_utils.interpolation."""
 
 import numpy as np
-import pytest
 
 from cht_utils.interpolation import interp2, interp2_bilinear, interp3
 

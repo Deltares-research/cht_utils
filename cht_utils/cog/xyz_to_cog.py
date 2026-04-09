@@ -58,9 +58,7 @@ def xyz_to_cog(
         if y_unique[0] > y_unique[-1]:
             da = da.sortby("y")
 
-        transform = from_origin(
-            x_unique[0] - dx / 2, y_unique[-1] + dy / 2, dx, dy
-        )
+        transform = from_origin(x_unique[0] - dx / 2, y_unique[-1] + dy / 2, dx, dy)
         da.rio.write_transform(transform, inplace=True)
 
         if isinstance(crs, int):

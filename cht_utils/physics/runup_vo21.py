@@ -10,7 +10,7 @@ from typing import Any, Union
 import numpy as np
 from scipy import interpolate as intp
 
-from cht_utils.physics.disper import disper, disper_fentonmckee
+from cht_utils.physics.disper import disper
 
 
 class runup_vo21:
@@ -112,15 +112,24 @@ class runup_vo21:
 
         self.r2p = self.setup + 0.82396 * np.sqrt(
             (0.82694 * self.hm0_lf) ** 2 + (0.73965 * self.hm0_hf) ** 2
-        ) * ksi2**0.15201 * ksi1**(-0.086635)
+        ) * ksi2**0.15201 * ksi1 ** (-0.086635)
 
     def compute_setup(self, drspr: np.ndarray, phi: np.ndarray) -> None:
         """Compute wave setup component."""
-        b = [4.0455506e00, 2.3740615e-02, 2.0340287e00, 4.6497588e-01,
-             7.0244541e-01, 5.0000000e-01, -3.1727583e-01]
+        b = [
+            4.0455506e00,
+            2.3740615e-02,
+            2.0340287e00,
+            4.6497588e-01,
+            7.0244541e-01,
+            5.0000000e-01,
+            -3.1727583e-01,
+        ]
         ksib = self.sl2 / np.sqrt(self.hm0 / self.l1)
-        v = b[0] * self.hm0 * (
-            b[1] + np.exp(-b[2] * self.ksis ** b[6] * ksib ** b[3]) * ksib ** b[4]
+        v = (
+            b[0]
+            * self.hm0
+            * (b[1] + np.exp(-b[2] * self.ksis ** b[6] * ksib ** b[3]) * ksib ** b[4])
         )
         fac1 = self._dirspreadfac_setup(drspr)
         fac2 = self._directionfac_setup(phi)
@@ -128,8 +137,16 @@ class runup_vo21:
 
     def compute_hm0_lf(self, drspr: np.ndarray, phi: np.ndarray) -> None:
         """Compute low-frequency wave height component."""
-        b = [3.4547125e00, 5.8790748e-01, 3.6906975e00, 2.3378556e-01,
-             2.3038164e00, 0, 5.0000000e-01, 0]
+        b = [
+            3.4547125e00,
+            5.8790748e-01,
+            3.6906975e00,
+            2.3378556e-01,
+            2.3038164e00,
+            0,
+            5.0000000e-01,
+            0,
+        ]
 
         self.tm0_ig = self._compute_tm01_ig()
         self.IG = self._compute_ig_in()
@@ -151,11 +168,21 @@ class runup_vo21:
 
     def compute_hm0_hf(self, drspr: np.ndarray, phi: np.ndarray) -> None:
         """Compute high-frequency wave height component."""
-        b = [9.5635099e-01, 2.0143005e00, 5.3602429e-01, 2.0000000e00,
-             0.0000000e00, 6.1856544e-01, 1.0000000e00, 0.0000000e00]
+        b = [
+            9.5635099e-01,
+            2.0143005e00,
+            5.3602429e-01,
+            2.0000000e00,
+            0.0000000e00,
+            6.1856544e-01,
+            1.0000000e00,
+            0.0000000e00,
+        ]
         ksib = self.sl2 / np.sqrt(self.hm0 / self.l1)
         self.hm0_hf = (
-            b[0] * self.hm0 * ksib ** b[1]
+            b[0]
+            * self.hm0
+            * ksib ** b[1]
             * np.tanh((self.ksis + b[4]) ** b[5] / (b[2] * ksib ** b[3]))
         )
 
@@ -163,7 +190,8 @@ class runup_vo21:
         """Compute infragravity wave period."""
         b = [4.4021341e-07, 1.8635421e00, -4.2705433e-01, 7.2541023e-02, 2.0058478e01]
         tm0_ig = (
-            b[0] + b[1] * self.surfslope ** b[2] * self.steepness ** b[3]
+            b[0]
+            + b[1] * self.surfslope ** b[2] * self.steepness ** b[3]
             + b[4] * self.surfslope
         )
         return tm0_ig * self.tp

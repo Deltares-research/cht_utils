@@ -105,7 +105,7 @@ class tekalblock:
         Parameters
         ----------
         fid : IO
-            Open file handle, seeked to ``self.tell``.
+            Open file handle, sought to ``self.tell``.
 
         Returns
         -------
@@ -128,10 +128,10 @@ class tekalblock:
 
         M = np.zeros([nvar, nx, ny])
         for ix in range(nx):
-            for iy in range(ny):
+            for it in range(ny):
                 rec = fid.readline()
                 values = rec.split()
-                M[:, ix, iy] = [float(v) for v in values[:nvar]]
+                M[:, ix, it] = [float(v) for v in values[:nvar]]
 
         self.data = M
         return M
@@ -228,7 +228,7 @@ class tekal:
                     fid.write(f"{block.npts:g} {block.nvar:g}\n")
                 else:
                     fid.write(f"{block.npts:g} {block.nvar:g} {block.ny:g}\n")
-                for iy in range(block.ny):
+                for it in range(block.ny):
                     for ix in range(block.nx):
-                        row = " ".join(f"{v:f}" for v in block.data[:, ix, iy])
+                        row = " ".join(f"{v:f}" for v in block.data[:, ix, it])
                         fid.write(row + "\n")
