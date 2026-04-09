@@ -1,32 +1,44 @@
+"""Linear wave dispersion relation solver.
+
+Absolute error in k*h < 5.0e-16 for all k*h.
+
+Example::
+
+    k = disper(2 * np.pi / 5, 5, 9.81)
 """
-DISPER  Linear dispersion relation.
 
-absolute error in k*h < 5.0e-16 for all k*h
-
-Syntax:
-k = disper(omega, h, g)
-
-Input:
-w = 2*pi/T, where T is the wave period
-h = water depth
-g = gravity constant
-
-Output:
-k = wave number
-
-Example
-k = disper(2*pi/5,5,9.81);
-"""
+from typing import List, Union
 
 import numpy as np
 
 
-def disper(w, h, g=9.81):
-    if not type(w) == list:
+def disper(
+    w: Union[float, List[float]],
+    h: Union[float, List[float]],
+    g: float = 9.81,
+) -> np.ndarray:
+    """Solve the linear dispersion relation for wave number.
+
+    Parameters
+    ----------
+    w : float or list of float
+        Angular frequency (2*pi/T).
+    h : float or list of float
+        Water depth.
+    g : float
+        Gravitational acceleration.
+
+    Returns
+    -------
+    np.ndarray
+        Wave number(s).
+    """
+    if not isinstance(w, list):
         w = [w]
-    if not type(h) == list:
+    if not isinstance(h, list):
         h = [h]
-    w2 = [iw**2 * ih / g for (iw, ih) in zip(w, h)]
+
+    w2 = [iw**2 * ih / g for iw, ih in zip(w, h)]
     q = [iw2 / (1 - np.exp(-(iw2 ** (5 / 4)))) ** (2 / 5) for iw2 in w2]
 
     thq = np.tanh(q)
@@ -39,8 +51,7 @@ def disper(w, h, g=9.81):
     D = b**2 - 4 * a * c
     arg = (-b + np.sqrt(D)) / (2 * a)
     iq = np.where(D < 0)[0]
-    if iq:
-        print(iq)
+    if len(iq) > 0:
         arg[iq] = -c[iq] / b[iq]
     q = q + arg
 
@@ -52,12 +63,26 @@ def disper(w, h, g=9.81):
     return k
 
 
-def disper_fentonmckee(sigma, d, g=9.81):
+def disper_fentonmckee(
+    sigma: Union[float, np.ndarray],
+    d: Union[float, np.ndarray],
+    g: float = 9.81,
+) -> Union[float, np.ndarray]:
+    """Fenton-McKee approximation of the linear dispersion relation.
 
-    def coth(x):
-        return 1.0 / np.tanh(x)
+    Parameters
+    ----------
+    sigma : float or np.ndarray
+        Angular frequency.
+    d : float or np.ndarray
+        Water depth.
+    g : float
+        Gravitational acceleration.
 
-    k = (sigma**2 / g) * (coth(sigma * np.sqrt(d / g)) ** (3 / 2)) ** (2 / 3)
-    # k = sigma**2 / g * coth((sigma * np.sqrt(d / g))**(3 / 2))**(2 / 3)
-
-    return k
+    Returns
+    -------
+    float or np.ndarray
+        Approximate wave number(s).
+    """
+    coth = lambda x: 1.0 / np.tanh(x)
+    return (sigma**2 / g) * (coth(sigma * np.sqrt(d / g)) ** (3 / 2)) ** (2 / 3)

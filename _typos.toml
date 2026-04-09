@@ -1,0 +1,9 @@
+[default.extend-words]
+# Domain-specific terms - not typos
+cht = "cht"
+
+[files]
+extend-exclude = [
+    "*.js",
+    "*.css",
+]

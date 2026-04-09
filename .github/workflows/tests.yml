@@ -7,31 +7,52 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened]
 
 jobs:
   test:
+    name: Test on ${{ matrix.os }} with Python ${{ matrix.python-version }}
     runs-on: "${{ matrix.os }}"
     defaults:
       run:
         shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         os: [ubuntu-latest, macos-latest, windows-latest]
-
+        include:
+          - python-version: "3.12"
+            os: ubuntu-latest
+            coverage: true
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Micromamba
-        uses: mamba-org/provision-with-micromamba@main
         with:
-          python_version: ${{ matrix.python_version }}
-          cache-downloads: true
-          cache-env: true
-          environment-file: ./environment.yml
+          fetch-depth: 0
+
+      - name: Setup MiniConda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: cht_utils
+          auto-update-conda: true
+          channels: conda-forge
+
+      - name: Create environment
+        shell: bash -el {0}
+        run: |
+          conda create -n cht_utils python=${{ matrix.python-version }} -y
 
       - name: Install test dependencies
         run: |
-          pip install -e ".[tests]"
+          conda run -n cht_utils pip install -e ".[tests]"
+
       - name: Test with pytest
         run: |
-          pytest tests
+          conda run -n cht_utils pytest tests
+
+      - name: Upload coverage report
+        if: matrix.coverage == true
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: coverage-report
+          path: coverage.xml
