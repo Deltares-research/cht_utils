@@ -22,7 +22,7 @@ To make sure you have the latest version of build:
 
 python -m pip install --upgrade build
 
-and to build the package, e.g.: 
+and to build the package, e.g.:
 
 cd d:\checkouts\github\cht_utils
 
