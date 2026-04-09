@@ -1,5 +1,8 @@
 """Tests for cht_utils.colors."""
 
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib as mpl
 import numpy as np
 
