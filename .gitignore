@@ -16,3 +16,4 @@ htmlcov/
 launch.json
 .vscode/
 .idea/
+docs/_build/
