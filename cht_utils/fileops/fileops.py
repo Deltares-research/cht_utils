@@ -216,13 +216,16 @@ def list_files(
         Sorted list of file paths or names.
     """
 
-    # If there are multiple consecutive wildcards, merge them into a single one
+    # Collapse consecutive wildcards — pathlib rejects "**" mixed with text
     while "**" in pattern:
         pattern = pattern.replace("**", "*")
     p = Path(src)
     if _has_glob(p):
         # Legacy: src is a glob pattern like "data/*.nc"
-        files = list(p.parent.glob(p.name))
+        name = p.name
+        while "**" in name:
+            name = name.replace("**", "*")
+        files = list(p.parent.glob(name))
     elif recursive:
         files = list(p.rglob(pattern))
     else:
