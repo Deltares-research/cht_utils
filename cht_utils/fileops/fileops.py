@@ -33,7 +33,11 @@ def move(src: PathLike, dst: PathLike) -> None:
                     target.unlink()
             shutil.move(str(f), str(dst))
     else:
-        shutil.move(str(src), str(dst))
+        if src.exists():
+            # Check if dst is an existing directory; if so, move src into it
+            # if dst.is_dir():
+            #     dst = dst / src.name
+            shutil.move(str(src), str(dst))
 
 
 def copy(src: PathLike, dst: PathLike) -> None:
@@ -211,6 +215,10 @@ def list_files(
     List[str]
         Sorted list of file paths or names.
     """
+
+    # If there are multiple consecutive wildcards, merge them into a single one
+    while "**" in pattern:
+        pattern = pattern.replace("**", "*")
     p = Path(src)
     if _has_glob(p):
         # Legacy: src is a glob pattern like "data/*.nc"
