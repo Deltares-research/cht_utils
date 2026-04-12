@@ -34,9 +34,13 @@ def move(src: PathLike, dst: PathLike) -> None:
             shutil.move(str(f), str(dst))
     else:
         if src.exists():
-            # Check if dst is an existing directory; if so, move src into it
-            # if dst.is_dir():
-            #     dst = dst / src.name
+            # If dst is a directory, the final target is dst/src.name
+            target = dst / src.name if dst.is_dir() else dst
+            if target.exists():
+                if target.is_dir():
+                    shutil.rmtree(target)
+                else:
+                    target.unlink()
             shutil.move(str(src), str(dst))
 
 
