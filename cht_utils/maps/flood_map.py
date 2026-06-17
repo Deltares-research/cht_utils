@@ -12,7 +12,6 @@ import os
 from pathlib import Path
 
 import contextily as ctx
-import fileops as fo
 import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
@@ -25,6 +24,7 @@ from PIL import Image
 from pyproj import Transformer
 from rasterio.warp import Resampling
 
+import cht_utils.maps.fileops as fo
 from cht_utils.maps.utils import deg2num, num2deg, png2elevation, png2int
 
 logger = logging.getLogger(__name__)
