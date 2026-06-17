@@ -16,19 +16,21 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "numpy",
-    "scipy",
-    "pandas",
+    "boto3",
+    "contextily",
     "geopandas",
-    "shapely",
-    "pyproj",
+    "numpy",
     "matplotlib",
+    "pandas",
+    "paramiko",
+    "pillow",
+    "pyproj",
     "pyyaml",
-    "xarray",
+    "scipy",
+    "shapely",
     "rioxarray",
     "rasterio",
-    "boto3",
-    "paramiko",
+    "xarray",
 ]
 dynamic = ["version"]
 
