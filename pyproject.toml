@@ -37,6 +37,14 @@ dynamic = ["version"]
 [project.optional-dependencies]
 tests = ["pytest", "pytest-cov"]
 
+[dependency-groups] # dev dependencies that will never be part of the published package
+dev = [
+  {include-group = "lint"},
+  {include-group = "test"}
+]
+test = ["pytest", "pytest-cov"] # run tests with `uv run pytest`
+lint = ["pre-commit", "ruff"] # install with `uv run pre-commit install`, run with: `uv run pre-commit run --all-files`
+
 [tool.setuptools]
 zip-safe = true
 

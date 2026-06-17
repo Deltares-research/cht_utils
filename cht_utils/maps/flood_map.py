@@ -38,6 +38,7 @@ __all__ = [
     "make_flood_map_overlay_v2",
 ]
 
+
 class FloodMap:
     """Compute and visualise flood depth maps from water level and topobathy data.
 
