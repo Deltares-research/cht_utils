@@ -16,6 +16,8 @@ remote
     Remote file transfer (AWS S3, SSH/SFTP).
 probabilistic
     Ensemble post-processing and probability maps.
+maps
+    Floodmap and Topography map visualization.
 
 Top-level modules
 -----------------
