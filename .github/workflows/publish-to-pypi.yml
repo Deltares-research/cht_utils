@@ -38,7 +38,7 @@ on:
       # https://peps.python.org/pep-0440/
 
 env:
-  PACKAGE_NAME: "cht-utils"
+  PACKAGE_NAME: "cht_utils"
   PYTHON_VERSION: "3.13"
   UV_VERSION: "0.8.22"
 
@@ -113,10 +113,10 @@ jobs:
           uv build
 
       - name: Validate wheel distribution
-        run: uv run --isolated --no-project --with dist/*.whl python -c "import cht_tiling; print(cht_tiling.__version__)"
+        run: uv run --isolated --no-project --with dist/*.whl python -c "import ${{ env.PACKAGE_NAME }}; print(${{ env.PACKAGE_NAME }}.__version__)"
 
       - name: Validate source distribution
-        run: uv run --isolated --no-project --with dist/*.tar.gz python -c "import cht_tiling; print(cht_tiling.__version__)"
+        run: uv run --isolated --no-project --with dist/*.tar.gz python -c "import ${{ env.PACKAGE_NAME }}; print(${{ env.PACKAGE_NAME }}.__version__)"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
