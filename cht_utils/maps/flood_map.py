@@ -405,7 +405,17 @@ class FloodMap:
 
                 for cv in color_values:
                     legend_item = {}
-                    legend_item["color"] = cv["color"]
+
+                    if "color" in cv:
+                        legend_item["color"] = cv["color"]
+                    elif "rgb" in cv:
+                        r, g, b = cv["rgb"]
+                        legend_item["color"] = f"#{r:02X}{g:02X}{b:02X}"
+                    else:
+                        raise ValueError(
+                            f"Color definition must contain 'color' or 'rgb': {cv}"
+                        )
+
                     if "upper_value" in cv and "lower_value" in cv:
                         legend_item["lower_value"] = cv["lower_value"]
                         legend_item["upper_value"] = cv["upper_value"]
