@@ -60,6 +60,9 @@ def netcdf_to_cog(
             blocksize=512,
             overview_resampling="average",
             dtype=da.dtype,
+            # Global / high-resolution datasets (e.g. GEBCO) exceed the 4 GB
+            # classic-TIFF limit; IF_SAFER switches to BigTIFF when needed.
+            BIGTIFF="IF_SAFER",
         )
         print(f"COG saved to: {output_cog_path}")
         return True

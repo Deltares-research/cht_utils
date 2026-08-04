@@ -69,6 +69,7 @@ def geotiff_to_cog(
                 compress="deflate",
                 blocksize=512,
                 overview_resampling=resampling,
+                BIGTIFF="IF_SAFER",
             )
 
         print(f"COG saved to: {output_cog_path}")

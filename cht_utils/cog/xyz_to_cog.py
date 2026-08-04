@@ -76,6 +76,7 @@ def xyz_to_cog(
             dtype="float32",
             nodata=np.nan,
             resampling=Resampling.average,
+            BIGTIFF="IF_SAFER",
         )
 
         print(f"Saved to: {os.path.abspath(output_cog_path)}")
