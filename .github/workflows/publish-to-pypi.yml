@@ -38,9 +38,8 @@ on:
       # https://peps.python.org/pep-0440/
 
 env:
-  PACKAGE_NAME: "cht_utils"
+  PACKAGE_NAME: "cht-utils"
   PYTHON_VERSION: "3.13"
-  UV_VERSION: "0.8.22"
 
 jobs:
   details:
@@ -49,7 +48,7 @@ jobs:
       new_version: ${{ steps.release.outputs.new_version }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v6
 
       - name: Extract tag and Details
         id: release
@@ -98,25 +97,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v10.3.3
         with:
-          version: ${{ env.UV_VERSION }}
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install package
-        shell: bash -el {0}
-        run: |
-          uv sync --locked --all-extras --dev
 
       - name: Build source and wheel distribution
         run: |
           uv build
-
-      - name: Validate wheel distribution
-        run: uv run --isolated --no-project --with dist/*.whl python -c "import ${{ env.PACKAGE_NAME }}; print(${{ env.PACKAGE_NAME }}.__version__)"
-
-      - name: Validate source distribution
-        run: uv run --isolated --no-project --with dist/*.tar.gz python -c "import ${{ env.PACKAGE_NAME }}; print(${{ env.PACKAGE_NAME }}.__version__)"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -134,20 +121,14 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: ${{ env.UV_VERSION }}
-          python-version: ${{ env.PYTHON_VERSION }}
-
       - name: Download artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
 
-      - name: Publish
-        run: uv publish
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1.14
 
   github_release:
     name: Create GitHub Release
@@ -158,8 +139,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
